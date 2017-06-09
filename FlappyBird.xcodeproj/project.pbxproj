@@ -14,6 +14,8 @@
 		526428BC1EEA49A4005F7410 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 526428BA1EEA49A4005F7410 /* LaunchScreen.storyboard */; };
 		526428C51EEA4A08005F7410 /* SpriteKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 526428C41EEA4A08005F7410 /* SpriteKit.framework */; };
 		526428C71EEA4BBE005F7410 /* GameScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 526428C61EEA4BBE005F7410 /* GameScene.swift */; };
+		526428C91EEA8179005F7410 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 526428C81EEA8179005F7410 /* AVFoundation.framework */; };
+		526428CB1EEA8374005F7410 /* sound.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 526428CA1EEA8374005F7410 /* sound.mp3 */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +28,8 @@
 		526428BD1EEA49A4005F7410 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		526428C41EEA4A08005F7410 /* SpriteKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SpriteKit.framework; path = System/Library/Frameworks/SpriteKit.framework; sourceTree = SDKROOT; };
 		526428C61EEA4BBE005F7410 /* GameScene.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GameScene.swift; sourceTree = "<group>"; };
+		526428C81EEA8179005F7410 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		526428CA1EEA8374005F7410 /* sound.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = sound.mp3; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -33,6 +37,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				526428C91EEA8179005F7410 /* AVFoundation.framework in Frameworks */,
 				526428C51EEA4A08005F7410 /* SpriteKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -64,6 +69,7 @@
 				526428B31EEA49A4005F7410 /* ViewController.swift */,
 				526428B51EEA49A4005F7410 /* Main.storyboard */,
 				526428C61EEA4BBE005F7410 /* GameScene.swift */,
+				526428CA1EEA8374005F7410 /* sound.mp3 */,
 				526428B81EEA49A4005F7410 /* Assets.xcassets */,
 				526428BA1EEA49A4005F7410 /* LaunchScreen.storyboard */,
 				526428BD1EEA49A4005F7410 /* Info.plist */,
@@ -74,6 +80,7 @@
 		526428C31EEA4A07005F7410 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				526428C81EEA8179005F7410 /* AVFoundation.framework */,
 				526428C41EEA4A08005F7410 /* SpriteKit.framework */,
 			);
 			name = Frameworks;
@@ -138,6 +145,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				526428CB1EEA8374005F7410 /* sound.mp3 in Resources */,
 				526428BC1EEA49A4005F7410 /* LaunchScreen.storyboard in Resources */,
 				526428B91EEA49A4005F7410 /* Assets.xcassets in Resources */,
 				526428B71EEA49A4005F7410 /* Main.storyboard in Resources */,

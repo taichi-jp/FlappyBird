@@ -1,10 +1,15 @@
 import SpriteKit
+import AVFoundation
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
     
     var scrollNode:SKNode!
-    var wallNode:SKNode!
+    var objectsNode:SKNode!
+    var appleNode:SKNode!
     var bird:SKSpriteNode!
+    
+    //サウンド再生用
+    var soundPlayer:AVAudioPlayer! = AVAudioPlayer()
     
     // 衝突判定カテゴリー
     let birdCategory: UInt32 = 1 << 0       // 0...00001
@@ -12,12 +17,17 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     let wallCategory: UInt32 = 1 << 2       // 0...00100
     //スコア用の物体
     let scoreCategory: UInt32 = 1 << 3      // 0...01000
+    //りんご
+    let appleCategory: UInt32 = 1 << 4      // 0...10000
     
     // スコア
     var score = 0
+    //アイテムスコア
+    var appleScore = 0
     //スコア表示用
     var scoreLabelNode:SKLabelNode!
     var bestScoreLabelNode:SKLabelNode!
+    var appleScoreLabelNode:SKLabelNode!
     //UserDefaultsを取得
     let userDefaults:UserDefaults = UserDefaults.standard
     
@@ -36,13 +46,17 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         addChild(scrollNode)
         
         // 壁用のノード
-        wallNode = SKNode()
-        scrollNode.addChild(wallNode)
+        objectsNode = SKNode()
+        scrollNode.addChild(objectsNode)
+        
+        //りんご用のノード
+        appleNode = SKNode()
+        scrollNode.addChild(appleNode)
         
         // 各種スプライトを生成する処理をメソッドに分割
         setupGround()
         setupCloud()
-        setupWall()
+        setupObjects()
         setupBird()
         setupScoreLabel()
     }
@@ -127,23 +141,35 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         }
     }
     
-    func setupWall() {
+    func setupObjects() {
         // 壁の画像を読み込む
         let wallTexture = SKTexture(imageNamed: "wall")
         //画質優先
         wallTexture.filteringMode = SKTextureFilteringMode.linear
         
         // 移動する距離を計算
-        let movingDistance = CGFloat(self.frame.size.width + wallTexture.size().width)
+        let movingDistance_w = CGFloat(self.frame.size.width + wallTexture.size().width)
         
         // 画面外まで移動するアクションを作成
-        let moveWall = SKAction.moveBy(x: -movingDistance, y: 0, duration:4.0)
+        let moveWall = SKAction.moveBy(x: -movingDistance_w, y: 0, duration:4.0)
         
         // 自身を取り除くアクションを作成
         let removeWall = SKAction.removeFromParent()
         
         // 2つのアニメーションを順に実行するアクションを作成
         let wallAnimation = SKAction.sequence([moveWall, removeWall])
+        
+        //画像読み込み
+        let appleTexture = SKTexture(imageNamed: "ringo")
+        appleTexture.filteringMode = SKTextureFilteringMode.linear
+        // 移動する距離を計算
+        let movingDistance_a = CGFloat(self.frame.size.width + appleTexture.size().width)
+        // 画面外まで移動するアクションを作成
+        let moveApple = SKAction.moveBy(x: -movingDistance_a, y: 0, duration:4.0)
+        // 自身を取り除くアクションを作成
+        let removeApple = SKAction.removeFromParent()
+        // 2つのアニメーションを順に実行するアクションを作成
+        let appleAnimation = SKAction.sequence([moveApple, removeApple])
         
         // 壁を生成するアクションを作成
         let createWallAnimation = SKAction.run({
@@ -199,16 +225,33 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             
             wall.run(wallAnimation)
             
-            self.wallNode.addChild(wall)
+            self.objectsNode.addChild(wall)
         })
         
-        // 次の壁作成までの待ち時間のアクションを作成
-        let waitAnimation = SKAction.wait(forDuration: 2)
+        let createAppleAnimation = SKAction.run({
+            //乱数を生成
+            let random_y = (arc4random_uniform( UInt32(self.frame.size.height) ) + (UInt32(self.frame.size.height) / 2)) / 2
+            //スプライト作成
+            let apple = SKSpriteNode(texture: appleTexture)
+            apple.position = CGPoint(x: self.frame.size.width + appleTexture.size().width / 2, y: CGFloat(random_y))
+            //物理演算設定
+            apple.physicsBody = SKPhysicsBody(circleOfRadius: apple.size.height / 2.0)
+            apple.physicsBody?.isDynamic = false
+            apple.physicsBody?.categoryBitMask = self.appleCategory
+            apple.physicsBody?.contactTestBitMask = self.birdCategory
+            
+            apple.run(appleAnimation)
+            
+            self.appleNode.addChild(apple)
+        })
+        
+        // 待ち時間のアクションを作成
+        let waitAnimation = SKAction.wait(forDuration: 1)
         
         // 壁を作成->待ち時間->壁を作成を無限に繰り替えるアクションを作成
-        let repeatForeverAnimation = SKAction.repeatForever(SKAction.sequence([createWallAnimation, waitAnimation]))
+        let repeatForeverAnimation = SKAction.repeatForever(SKAction.sequence([createWallAnimation, waitAnimation, createAppleAnimation, waitAnimation]))
         
-        wallNode.run(repeatForeverAnimation)
+        objectsNode.run(repeatForeverAnimation)
     }
     
     func setupBird() {
@@ -236,7 +279,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         bird.physicsBody?.categoryBitMask = birdCategory
         //跳ね返る(collisionBitMask)
         bird.physicsBody?.collisionBitMask = groundCategory | wallCategory
-        bird.physicsBody?.contactTestBitMask = groundCategory | wallCategory
+        bird.physicsBody?.contactTestBitMask = groundCategory | wallCategory | appleCategory
         
         // アニメーションを設定
         bird.run(flap)
@@ -247,6 +290,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     
     func setupScoreLabel() {
         score = 0
+        appleScore = 0
         scoreLabelNode = SKLabelNode()
         scoreLabelNode.fontColor = UIColor.black
         scoreLabelNode.position = CGPoint(x: 10, y: self.frame.size.height - 30)
@@ -255,9 +299,17 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         scoreLabelNode.text = "Score:\(score)"
         self.addChild(scoreLabelNode)
         
+        appleScoreLabelNode = SKLabelNode()
+        appleScoreLabelNode.fontColor = UIColor.black
+        appleScoreLabelNode.position = CGPoint(x: 10, y: self.frame.size.height - 60)
+        appleScoreLabelNode.zPosition = 100 // 一番手前に表示する
+        appleScoreLabelNode.horizontalAlignmentMode = SKLabelHorizontalAlignmentMode.left
+        appleScoreLabelNode.text = "Apples:\(appleScore)"
+        self.addChild(appleScoreLabelNode)
+        
         bestScoreLabelNode = SKLabelNode()
         bestScoreLabelNode.fontColor = UIColor.black
-        bestScoreLabelNode.position = CGPoint(x: 10, y: self.frame.size.height - 60)
+        bestScoreLabelNode.position = CGPoint(x: 10, y: self.frame.size.height - 90)
         bestScoreLabelNode.zPosition = 100 // 一番手前に表示する
         bestScoreLabelNode.horizontalAlignmentMode = SKLabelHorizontalAlignmentMode.left
         
@@ -296,15 +348,39 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             // ベストスコア更新か確認する
             //まだベストスコアが保存されていなければ0
             var bestScore = userDefaults.integer(forKey: "BEST")
-            if score > bestScore {
-                bestScore = score
+            if score + appleScore > bestScore {
+                bestScore = score + appleScore
                 bestScoreLabelNode.text = "Best Score:\(bestScore)"
                 userDefaults.set(bestScore, forKey: "BEST")
                 //即座に保存
                 userDefaults.synchronize()
             }
-        } else {
-            // 壁か地面と衝突した
+        } else if (contact.bodyA.categoryBitMask & appleCategory) == appleCategory || (contact.bodyB.categoryBitMask & appleCategory) == appleCategory {//りんごの時
+            var appleBody: SKPhysicsBody
+            
+            if contact.bodyA.categoryBitMask < contact.bodyB.categoryBitMask {
+                appleBody = contact.bodyB
+            } else {
+                appleBody = contact.bodyA
+            }
+            
+            //サウンド
+            if let url = Bundle.main.url(forResource: "sound", withExtension: "mp3"){
+                do {
+                    soundPlayer = try AVAudioPlayer(contentsOf: url)
+                    soundPlayer.play()
+                } catch {
+                    soundPlayer = nil
+                }
+            } else {
+                fatalError("URL is nil.")
+            }
+            print("Apple!")
+            appleScore += 1
+            appleScoreLabelNode.text = String("Apples:\(appleScore)")
+            appleBody.node?.removeFromParent()
+            
+        } else {// 壁か地面と衝突した
             print("GameOver")
             
             // スクロールを停止させる
@@ -322,14 +398,16 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     func restart() {
         //スコアをリセット
         score = 0
+        appleScore = 0
         scoreLabelNode.text = String("Score:\(score)")
+        appleScoreLabelNode.text = String("Apples:\(appleScore)")
         
         bird.position = CGPoint(x: self.frame.size.width * 0.2, y:self.frame.size.height * 0.7)
         bird.physicsBody?.velocity = CGVector.zero
         bird.physicsBody?.collisionBitMask = groundCategory | wallCategory
         bird.zRotation = 0.0
         
-        wallNode.removeAllChildren()
+        objectsNode.removeAllChildren()
         
         bird.speed = 1
         scrollNode.speed = 1
